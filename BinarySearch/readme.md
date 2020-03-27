@@ -4,8 +4,8 @@ This is a recursive implementation of binary search in python with some profilin
 
 Use the command "python binarySeach.py" to run the program
 
-![Sample output](binSearch_test.PNG)
+![Sample output](binsearch_test.png)
 
 To collect profiling data I used the timeit function from the timer library and plt() from matplotlib to plot my timing data. The expected time complexity is O(log n)
 
-![Timing Data](Figure_1.PNG)
+![Timing Data](Figure_1.png)
