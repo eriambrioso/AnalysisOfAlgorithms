@@ -13,7 +13,31 @@ def printMat(M):
 	table = [fmt.format(*row) for row in s]
 	print('\n'.join(table))
 
-# Write a function to build up a matrix to the nearest power of 2
+def make_zeros(n_rows: int, n_columns: int):
+    matrix = []
+    for i in range(n_rows):
+        matrix.append([0] * n_columns)
+    return matrix
+
+# Matrix multiplication using the standard algorithm and list comprehension.
+def my_matmul(X, Y):
+	result = [[sum(a*b for a,b in zip(X_row, Y_col)) for Y_col in zip(*Y)] for X_row in X]
+	return result
+
+# Matrix multiplication using the standard algorithm and for loops
+def standard(A, B, solution):
+	size = len(A)
+	for i in range(size):
+		for j in range(size):
+			for k in range(size):
+				pass
+				#solution[i][j] += A[i][k] * B[k][j]
+	return solution
+
+"""
+We define the functions we need for the Strassen algorithm.
+"""
+# Build up a matrix to the nearest power of 2
 def buildPowerTwo(M):
 	result = M
 
@@ -32,26 +56,6 @@ def buildPowerTwo(M):
 			result.append([0] * size)
 
 	return result
-
-# Matrix multiplication using the standard algorithm and list comprehension.
-def my_matmul(X, Y):
-	result = [[sum(a*b for a,b in zip(X_row, Y_col)) for Y_col in zip(*Y)] for X_row in X]
-	return result
-
-# Matrix multiplication using the standard algorithm and for loops
-def standard(A, B):
-    solution = []
-    size = len(A)
-    for i in range(size):
-        for j in range(size):
-            solution[i][j] = 0
-            for k in range(size):
-                solution[i][j] += A[i][k] * B[k][j]
-    return solution
-
-"""
-We define the functions we need for the Strassen algorithm.
-"""
 # Adds two matrices
 def add(A,B):
 	n = len(A)
@@ -139,61 +143,60 @@ The shows how to use a context manager to time a block of code.
 The code idea comes from Beazley and Jones's Python Cookbook (pp. 588-599)
 """
 import time
-from contextlib import contextmanager
 import numpy as np
-
-# We create a context manager to time a block of code.
-@contextmanager
-def timeblock(label):
-    start = time.perf_counter()
-    try:
-        yield
-    finally:
-        end = time.perf_counter()
-        print(f'{label} : {end - start}')
+import matplotlib.pylab as plt
 
 
-# We define a few matrices for testing purposes.
-A = [[1,2], [3,4]]
-B = [[5,6], [7,8]]
+# Timing the algorithms
+strassen_timing = {}
+standard_timing = {}
+comp_timing = {}
+numpy_timing = {}
 
-C = [[1,2,3,4], [1,1,1,1], [5,6,7,8], [1,1,1,1]]
-D = [[1,2,3,4], [5,6,7,8], [1,1,1,1], [1,1,1,1]]
+for n in range(2, 250, 10):
+	print(n)
+	E = [[rd.randint(1, 3) for j in range(n)] for i in range(n)]
+	F = [[rd.randint(1, 3) for j in range(n)] for i in range(n)]
+	E = buildPowerTwo(E)
+	F = buildPowerTwo(F)
+	
+	
+	# time strassen
+	start = time.perf_counter()
+	strassen_mul(E, F)
+	end = time.perf_counter()
+	strassen_timing[n] = end-start
+	
+	# time standard
+	start = time.perf_counter()
+	standard(E, F, make_zeros(len(E), len(E)))
+	end = time.perf_counter()
+	standard_timing[n] = end-start
+	"""
+	# time list comp
+	start = time.perf_counter()
+	my_matmul(E, F)
+	end = time.perf_counter()
+	comp_timing[n] = end-start
+	"""
 
-n = 3
-m = 8
-E = [[rd.randint(1,3) for j in range(m)] for i in range(m)]
-F = [[rd.randint(1,3) for j in range(m)] for i in range(m)]
-E = buildPowerTwo(E)
-F = buildPowerTwo(F)
+	# time numpy
+	start = time.perf_counter()
+	E = np.array(E)
+	F = np.array(F)
+	solution = E.dot(F)
+	end = time.perf_counter()
+	numpy_timing[n] = end-start
+	
 
-# Code for timing a a block of code
-with timeblock('Time of the block'):
-    # The for loop is the block of code that is timed.
-    # We multiply two matrices of increasing size.
-    NUM = 2
-    for i in range(1, NUM + 1):
-        n = 10 ** i  # The size of the matrices
-        E = [[rd.randint(1, 3) for j in range(n)] for i in range(n)]
-        F = [[rd.randint(1, 3) for j in range(n)] for i in range(n)]
-        E = buildPowerTwo(E)
-        F = buildPowerTwo(F)
-        print(f'Multiplying two {n}x{n} =', strassen_mul(E, F))
-
-"""
-M2 = strassen_mul(E, F)
-M1 = my_matmul(E, F)
-
-print('E matrix')
-printMat(E)
-print('*' * (2 ** (n+1)))
-print('F matrix')
-printMat(F)
-print('*' * (2 ** (n+1)))
-print('Result of standard algorithm')
-printMat(M1)
-print('*' * (2 ** (n+1)))
-print('Result of Strassen')
-printMat(M2)
-print('*' * (2 ** (n+1)))
-"""
+# Plotting the time complexity
+ax = plt.subplots()
+#plt.plot(list(comp_timing.keys()), list(comp_timing.values()), label = "Comp")
+plt.plot(list(standard_timing.keys()), list(standard_timing.values()), label = 'Standard')
+plt.plot(list(numpy_timing.keys()), list(numpy_timing.values()), label = 'Numpy')
+plt.plot(list(strassen_timing.keys()), list(strassen_timing.values()), label = 'Strassen')
+plt.title("Matrix Multiplication time complexity")
+plt.ylabel("Time")
+plt.xlabel("n, size of input")
+plt.legend()
+plt.show()
